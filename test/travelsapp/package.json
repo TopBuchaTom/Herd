@@ -3,8 +3,12 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "dev": "vite",
         "build": "vite build",
-        "dev": "vite"
+        "setup-app": "composer install && npm install && npm run build && node -e \"const fs = require('fs'); const data = fs.readFileSync('.env.example'); fs.writeFileSync('.env', data); fs.writeFileSync('database/database.sqlite', '') \" && php artisan key:generate",
+        "setup-database": "node -e \"const fs = require('fs'); fs.writeFileSync('database/database.sqlite', '') \" && php artisan migrate:refresh --seed",
+        "setup-all": "npm run setup-app && npm run setup-database",
+        "start": "php artisan serve"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
