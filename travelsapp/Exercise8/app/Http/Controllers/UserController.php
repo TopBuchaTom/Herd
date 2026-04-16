@@ -20,7 +20,7 @@ class UserController extends Controller
     }
 
     public function store(Request $request, User $user) {
-        $user = $user->create($request->all() + ['is_admin' => 0, 'is_verifier' => 0, 'is_approver' => 0]);
+        $user = $user->create($request->all());
 
         return redirect()->route('users.show', ['user' => $user]);
     }
@@ -36,7 +36,7 @@ class UserController extends Controller
     }
 
     public function update(Request $request, User $user) {
-        $user->update($request->all() + ['is_admin' => 0, 'is_verifier' => 0, 'is_approver' => 0]);
+        $user->update($request->all());
 
         return redirect()->route('users.show', ['user' => $user]);
     }

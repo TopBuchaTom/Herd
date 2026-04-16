@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Mapping\TravelsTable_V2 as Table;
+use App\Models\Mapping\TravelsTable_V1 as Table;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +21,6 @@ class TravelSeeder extends Seeder
             Table::COLUMN_END => now()->setHour(11)->setMinute(0)->setSecond(0)->addDays(10),
             Table::COLUMN_AMOUNT => 120.15,
             Table::COLUMN_DETAILS => "Testreise",
-            Table::COLUMN_APPLICANT_ID => 1
         ]);
 
         // Additional travels

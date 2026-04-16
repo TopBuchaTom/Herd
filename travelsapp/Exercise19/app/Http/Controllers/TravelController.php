@@ -14,22 +14,10 @@ class TravelController extends Controller
 {
     public function index(Request $request)
     {
-        $userId = $this->getUserId();
-        $type = strtoupper($request->review_type ?? "request");
-        $state = $request->review_state ?? "";
-
-        // whereRelation nicht verwenden, da dies separate Exists macht und kein and
-        $query = Travel::query()->with(Travel::REVIEWS)->whereHas(Travel::REVIEWS, function($reviews) use ($userId, $type, $state) {
-            $reviews->where(Review::USER_ID, $userId)->where(Review::TYPE, $type);
-
-            if (!empty($state))
-                $reviews->where(Review::STATE, $state);
-        });
+        $query = Travel::query();
 
         return view('travels.index', [
             'travels' => $query->paginate(10),
-            'review_type' => $type,
-            'review_state' => $state
         ]);
     }
 

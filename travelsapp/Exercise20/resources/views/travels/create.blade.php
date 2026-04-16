@@ -10,15 +10,6 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <form method="POST" action="{{ route('travels.create') }}">
-                        <section class="tab">
-                            <input type="radio" name="tabIndex" value="0" id="tab0" hidden @checked(old("tabIndex", $tabIndex) == 0) />
-                            <input type="radio" name="tabIndex" value="1" id="tab1" hidden @checked(old("tabIndex", $tabIndex) == 1) />
-                            <header>
-                                <nav>
-                                    <label for="tab0">Travel</label><label for="tab1">Participants</label>
-                                </nav>
-                            </header>
-                            <article class="tab0">
                                 <div>
                                     <label for="title">Title</label>
                                     <input type="text" name="title" value="{{ old('title') }}" class="{{ $errors->has('title') ? 'has-error' : '' }}" />
@@ -48,13 +39,7 @@
                                     <label for="details">Details</label>
                                     <textarea name="details" class="{{ $errors->has('details') ? 'has-error' : '' }}">{{ old('details') }}</textarea>
                                 </div>
-                                <footer>
-                                    <nav>
-                                        <label for="tab1">Next</label>
-                                    </nav>
-                                </footer>
-                            </article>
-                            <article class="tab1">
+
                                 <select name="participant_user">
                                     @foreach ($users->filter(fn($el) => $el->email != Auth::user()->email && !collect(old('participants', $participants))->contains($el->email)) as $user)
                                     <option value="{{ $user->email }}">{{ $user->email }}</option>
@@ -87,13 +72,8 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <footer>
-                                    <nav>
-                                        <label for="tab0">Previous</label>
-                                    </nav>
-                                </footer>
-                            </article>
-                        </section>
+
+
                         <br/>
                         <fieldset>
                             <legend>Next review</legend>

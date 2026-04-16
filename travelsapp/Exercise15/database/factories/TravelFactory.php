@@ -34,7 +34,6 @@ class TravelFactory extends Factory
             Travel::END => $end,
             Travel::AMOUNT => $amount,
             Travel::DETAILS => $details,
-            Travel::APPLICANT_ID => fake()->numberBetween(1, 200)
         ];
     }
 }

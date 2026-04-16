@@ -17,18 +17,6 @@
                             <label for="email">E-Mail</label>:
                             <input type="text" name="email" value="{{ old('email', $user->email) }}" class="{{ $errors->has('email') ? 'has-error' : '' }}" />
                         </div>
-                        <div>
-                            <label for="is_admin">Admin</label>
-                            <input type="checkbox" {{ $user->is_admin ? 'checked' : '' }} name="is_admin" id="is_admin" value="1" />
-                        </div>
-                        <div>
-                            <label for="is_verifier">Verifier</label>
-                            <input type="checkbox" {{ $user->is_verifier ? 'checked' : '' }} name="is_verifier" id="is_verifier" value="1" />
-                        </div>
-                        <div>
-                            <label for="is_approver">Approver</label>
-                            <input type="checkbox" {{ $user->is_approver ? 'checked' : '' }} name="is_approver" id="is_approver" value="1" />
-                        </div>
                         <input type="submit" value="Save" />
                         @if ($errors->any())
                         <div class="errors">

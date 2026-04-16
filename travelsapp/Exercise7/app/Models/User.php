@@ -2,50 +2,46 @@
 
 namespace App\Models;
 
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Mapping\UsersTable_V1 as Table;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    const ID = Table::COLUMN_ID;
-    const NAME = Table::COLUMN_NAME;
-    const EMAIL = Table::COLUMN_EMAIL;
-    const PASSWORD = Table::COLUMN_PASSWORD;
-    const EMAIL_VERIFIED_AT = Table::COLUMN_EMAIL_VERIFIED_AT;
-    const REMEMBER_TOKEN = Table::COLUMN_REMEMBER_TOKEN;
-
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
-        self::NAME,
-        self::EMAIL,
-        self::PASSWORD,
+        'name',
+        'email',
+        'password',
     ];
 
     /**
-     * The attributes that should be hidden for arrays.
+     * The attributes that should be hidden for serialization.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $hidden = [
-        self::PASSWORD,
-        self::REMEMBER_TOKEN,
+        'password',
+        'remember_token',
     ];
 
     /**
-     * The attributes that should be cast to native types.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $casts = [
-        self::EMAIL_VERIFIED_AT => 'datetime',
-        self::PASSWORD => 'hashed',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 }

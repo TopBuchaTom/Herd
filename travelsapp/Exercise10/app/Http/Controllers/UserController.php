@@ -7,13 +7,6 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    function __construct()
-    {
-        // Empfohlen, da aspektorientiert, weil in keiner Action mehr Autorisierung geprüft werden muss,
-        // da über folgenden Aufruf automatisch zwischen Controller-Methoden und Policy-Methoden via Namen gematched wird
-        $this->authorizeResource(User::class, 'user');
-    }
-
     public function index()
     {
         return view('users.index', [

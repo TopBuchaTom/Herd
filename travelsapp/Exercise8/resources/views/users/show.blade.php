@@ -11,13 +11,6 @@
                     <ul>
                         <li>Name: {{ $user->name }}</li>
                         <li>E-Mail: {{ $user->email }}</li>
-                        <li>Berechtigungen:
-                            <ul>
-                            @foreach (array_filter([$user->is_admin ? "Admin" : null, $user->is_verifier ? "Verifier" : null, $user->is_approver ? "Approver" : null]) as $permission)
-                                <li>{{ $permission }}</li>
-                            @endforeach
-                            </ul>
-                        </li>
                         <li>Created at: {{ $user->created_at }}</li>
                         <li>Updated at: {{ $user->updated_at }}</li>
                     </ul>

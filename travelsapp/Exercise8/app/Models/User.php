@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Mapping\UsersTable_V2 as Table;
+use App\Models\Mapping\UsersTable_V1 as Table;
 
 class User extends Authenticatable
 {
@@ -17,9 +17,6 @@ class User extends Authenticatable
     const PASSWORD = Table::COLUMN_PASSWORD;
     const EMAIL_VERIFIED_AT = Table::COLUMN_EMAIL_VERIFIED_AT;
     const REMEMBER_TOKEN = Table::COLUMN_REMEMBER_TOKEN;
-    const IS_ADMIN = Table::COLUMN_IS_ADMIN;
-    const IS_VERIFIER = Table::COLUMN_IS_VERIFIER;
-    const IS_APPROVER = Table::COLUMN_IS_APPROVER;
 
     /**
      * The attributes that are mass assignable.
@@ -30,9 +27,6 @@ class User extends Authenticatable
         self::NAME,
         self::EMAIL,
         self::PASSWORD,
-        self::IS_ADMIN,
-        self::IS_VERIFIER,
-        self::IS_APPROVER
     ];
 
     /**

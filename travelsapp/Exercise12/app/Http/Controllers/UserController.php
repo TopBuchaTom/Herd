@@ -43,12 +43,6 @@ class UserController extends Controller
     }
 
     public function store(Request $request, User $user) {
-        $request->validate([
-            'name' => ['required', 'max:255'],
-            'email' => ['required', 'max:255'],
-            'password' => ['bail', 'required', 'min:8', 'max:255', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/']
-        ]);
-
         $user = $user->create($request->all() + ['is_admin' => 0, 'is_verifier' => 0, 'is_approver' => 0]);
 
         return redirect()->route('users.show', ['user' => $user]);
@@ -65,11 +59,6 @@ class UserController extends Controller
     }
 
     public function update(Request $request, User $user) {
-        $request->validate([
-            'name' => ['required', 'max:255'],
-            'email' => ['required', 'max:255'],
-        ]);
-
         $user->update($request->all() + ['is_admin' => 0, 'is_verifier' => 0, 'is_approver' => 0]);
 
         return redirect()->route('users.show', ['user' => $user]);

@@ -59,13 +59,7 @@ class TravelController extends Controller
 
     public function show(Request $request, Travel $travel)
     {
-        $travel = $this->getPersistedTravel($travel)->load(Travel::REVIEWS);
-        $participants = $this->getPersistedParticipants($travel);
-
-        return view('travels.show', [
-            'travel' => $travel,
-            'participants' => $participants
-        ]);
+        return view('travels.show', ['travel' => $travel]);
     }
 
     public function edit(Request $request, Travel $travel)
@@ -212,11 +206,11 @@ class TravelController extends Controller
         return User::all();
     }
 
-    function getPersistedTravel($travel, $reviewId = -1) {
+    function getPersistedTravel($travel) {
         return $travel;
     }
 
-    function getPersistedParticipants($travel, $reviewId = -1) {
+    function getPersistedParticipants($travel) {
         return $travel->participants()->get()->map(function($participant) { return $participant->email; });
     }
 
