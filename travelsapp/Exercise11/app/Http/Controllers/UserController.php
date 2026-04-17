@@ -14,10 +14,26 @@ class UserController extends Controller
         $this->authorizeResource(User::class, 'user');
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = User::query();
+
+        if (isset($request->filter_value))
+            $query = $query->where($request->filter_criteria, 'like',  "%$request->filter_value%");
+        if (isset($request->filter_isadmin))
+            $query = $query->where('is_admin', $request->filter_isadmin);
+        if (isset($request->filter_isverifier))
+            $query = $query->where('is_verifier', $request->filter_isverifier);
+        if (isset($request->filter_isapprover))
+            $query = $query->where('is_approver', $request->filter_isapprover);
+
         return view('users.index', [
-            'users' => User::all()
+            'users' => $query->paginate(10),
+            'filter_criteria' => $request->filter_criteria,
+            'filter_value' => $request->filter_value,
+            'filter_isadmin' => $request->filter_isadmin,
+            'filter_isverifier' => $request->filter_isverifier,
+            'filter_isapprover' => $request->filter_isapprover
         ]);
     }
 
