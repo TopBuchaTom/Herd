@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\Mapping\UsersTable_V1 as Table;
 
 return new class extends Migration
 {
@@ -11,12 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create(Table::TABLE_NAME, function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string(Table::COLUMN_NAME);
+            $table->string(Table::COLUMN_EMAIL)->unique();
+            $table->timestamp(Table::COLUMN_EMAIL_VERIFIED_AT)->nullable();
+            $table->string(Table::COLUMN_PASSWORD);
             $table->rememberToken();
             $table->timestamps();
         });
@@ -42,7 +43,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists(Table::TABLE_NAME);
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
