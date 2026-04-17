@@ -3,64 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\Travel;
-use App\Http\Requests\StoreTravelRequest;
-use App\Http\Requests\UpdateTravelRequest;
+use Illuminate\Http\Request;
 
 class TravelController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $query = Travel::query();
+
+        return view('travels.index', [
+            'travels' => $query->paginate(10),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('travels.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreTravelRequest $request)
+    public function store(Request $request, Travel $travel)
     {
-        //
+        $travel = $travel->create($request->all());
+
+        return redirect()->route('travels.show', ['travel' => $travel]);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Travel $travel)
     {
-        //
+        return view('travels.show', ['travel' => $travel]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Travel $travel)
     {
-        //
+        return view('travels.edit', ['travel' => $travel]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateTravelRequest $request, Travel $travel)
-    {
-        //
+    public function update(Request $request, Travel $travel) {
+        $travel->update($request->all());
+
+        return redirect()->route('travels.show', ['travel' => $travel]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Travel $travel)
     {
-        //
+        $travel->delete();
+
+        return redirect()->route('travels.index');
     }
 }
