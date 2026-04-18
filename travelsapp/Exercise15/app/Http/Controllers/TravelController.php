@@ -23,7 +23,7 @@ class TravelController extends Controller
 
     public function store(Request $request, Travel $travel)
     {
-        $travel = $travel->create($request->all());
+        $travel = $travel->create($request->merge([Travel::APPLICANT_ID => $this->getUserId()])->all());
 
         return redirect()->route('travels.show', ['travel' => $travel]);
     }
@@ -49,5 +49,9 @@ class TravelController extends Controller
         $travel->delete();
 
         return redirect()->route('travels.index');
+    }
+
+    private function getUserId() {
+        return auth()->user()->id;
     }
 }
