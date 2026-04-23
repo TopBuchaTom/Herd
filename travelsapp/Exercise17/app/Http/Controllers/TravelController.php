@@ -64,13 +64,54 @@ class TravelController extends Controller
 
     public function edit(Request $request, Travel $travel)
     {
-        return view('travels.edit', ['travel' => $travel]);
+        $travel = $this->getPersistedTravel($travel);
+        [$currentReview, $previousReview, $nextReviewUser] = $this->getRequestReviews($request, $travel);
+
+        $participants = $this->getRequestParticipants($request) ?? $this->getPersistedParticipants($travel);
+        $users = $this->getUsers();
+
+        // Keep old inputs if put to same page
+        if ($request->method() == "PUT")
+            $request->flashExcept(["participants", "next_review_user"]);
+
+        return view('travels.edit', [
+            'travel' => $travel,
+            'participants' => $participants,
+            'users' => $users,
+            'current_review_type' => $currentReview->type,
+            'previous_review' => $previousReview,
+            'next_review_user' => $nextReviewUser
+        ]);
     }
 
     public function update(Request $request, Travel $travel) {
-        $travel->update($request->all());
+        // Validate data
+        $nextReviewUser = $this->validateDataForReview($request);
 
-        return redirect()->route('travels.show', ['travel' => $travel]);
+        // Load current data
+        $reviews = $travel->load(Travel::REVIEWS)->reviews()->get();
+        $currentReview = $reviews->last();
+
+        $changed = true;
+
+        // Update travel
+        $travel->update($request->merge([Travel::APPLICANT_ID => $this->getUserId()])->all());
+
+        // Update participants
+        $participantUsers = $this->getParticipantUsers($request->participants);
+        $travel->participants()->sync($participantUsers);
+
+        // Update current review
+        $this->updateReview($currentReview,
+            $request->has("action_accept") ? ReviewState::Accepted->value : ReviewState::Declined->value,
+            $request->current_review_comment, $changed
+        );
+
+        // Create next review if review type is verification or next user is applicant
+        if ($currentReview->type != ReviewType::Approval->value || $nextReviewUser->id != $reviews->first()->user_id)
+            $this->createReview($travel->id, $nextReviewUser->id, ReviewType::Verification, ReviewState::Pending, null, 0);
+
+        return $this->show($request, $travel);
     }
 
     public function destroy(Travel $travel)
@@ -101,6 +142,30 @@ class TravelController extends Controller
             throw ValidationException::withMessages(["next_review_user" => "Invalid user!"]);
 
         return $nextReviewUser;
+    }
+
+    private function getRequestReviews(Request $request, Travel $travel) {
+        $reviews = $travel->load(Travel::REVIEWS)->reviews()->get();
+        $currentReview = $reviews->last();
+        $firstReview = $reviews->first();
+        $previousReview = $reviews->get($reviews->count() - 2, 0);
+        $nextReviewUser = $request->next_review_user;
+
+        if ($request->has("action_back_to_applicant"))
+            $nextReviewUser = $firstReview->user()->first()->email;
+        else if ($request->has("action_back_to_previous_user"))
+            $nextReviewUser = $previousReview->user()->first()->email;
+        else if ($request->has("action_toggle_review_type")) {
+            $currentReview->type = ($currentReview->type == ReviewType::Verification->value)
+                ? ReviewType::Approval->value
+                : ReviewType::Verification->value;
+            $currentReview->save();
+        }
+
+        if ($currentReview->type == ReviewType::Approval->value)
+            $nextReviewUser = $reviews->get(0)->user()->first()->email;
+
+        return [$currentReview, $previousReview, $nextReviewUser];
     }
 
     private function getRequestParticipants(Request $request) {
@@ -141,6 +206,14 @@ class TravelController extends Controller
         return User::all();
     }
 
+    function getPersistedTravel($travel) {
+        return $travel;
+    }
+
+    function getPersistedParticipants($travel) {
+        return $travel->participants()->get()->map(function($participant) { return $participant->email; });
+    }
+
     private function createReview($travelId, $userId, $type, $state, $comment, $changed) {
         Review::create([
             Review::TRAVEL_ID => $travelId,
@@ -150,5 +223,12 @@ class TravelController extends Controller
             Review::CHANGED => $changed,
             Review::COMMENT => $comment
         ]);
+    }
+
+    private function updateReview($currentReview, $state, $comment, $changed) {
+        $currentReview->state = $state;
+        $currentReview->comment = $comment;
+        $currentReview->changed = $changed;
+        $currentReview->save();
     }
 }
