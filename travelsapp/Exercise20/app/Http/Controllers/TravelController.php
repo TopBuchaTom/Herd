@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\Review;
 use App\Models\ReviewState;
 use App\Models\ReviewType;
@@ -10,10 +11,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
+// Datenbank zurücksetzen für Tests
+// php artisan migrate:refresh --seed
+
 class TravelController extends Controller
 {
-    public function index(Request $request)
-    {
+    // GET /travels: Show a list of all travels filtered by review type and review state
+    function index(Request $request) {
         $userId = $this->getUserId();
         $type = strtoupper($request->review_type ?? "request");
         $state = $request->review_state ?? "";
@@ -33,8 +37,36 @@ class TravelController extends Controller
         ]);
     }
 
-    public function create(Request $request)
-    {
+    // GET /travels/{id}: Show summary for specified travel with the option to switch between different review states
+    function show(Request $request, Travel $travel) {
+        // First calculate review version because initial travel object state is required to apply events
+        $reviewId = $request->review ?? -1;
+        $reviewTravel = $this->getPersistedTravel($travel, $reviewId)->load(Travel::REVIEWS);
+        $reviewParticipants = $this->getPersistedParticipants($travel, $reviewId);
+        $reviewEvents = Event::getEntityEvents($travel, $reviewId)->merge(Event::getListEvents(User::class, $travel->id, $reviewId));
+        $reviewIndex = ($reviewId == -1)
+            ? $reviewTravel->reviews()->count()
+            : $reviewTravel->reviews()->get()->search(function($review) use ($reviewId) { return $review->id == $reviewId; }) + 1;
+
+        // Calculate latest version of travel object
+        $travel = $this->getPersistedTravel($travel)->load(Travel::REVIEWS);
+        $participants = $this->getPersistedParticipants($travel);
+        $events = Event::getEntityEvents($travel)->merge(Event::getListEvents(User::class, $travel->id));
+
+        return view('travels.show', [
+            'travel' => $travel,
+            'participants' => $participants,
+            'events' => $events,
+            'reviewIndex' => $reviewIndex,
+            'reviewTravel' => $reviewTravel,
+            'reviewParticipants' => $reviewParticipants,
+            'reviewEvents' => $reviewEvents
+        ]);
+    }
+
+    // GET /travels/create: Open empty form to create new travel request
+    // POST /travels/create: Rerender form with previous inputs but changed participants
+    function create(Request $request) {
         $participants = $this->getRequestParticipants($request) ?? [];
         $users = $this->getUsers();
 
@@ -44,44 +76,14 @@ class TravelController extends Controller
 
         return view('travels.create', [
             'participants' => $participants,
-            'users' => $users
+            'users' => $users,
+            'tabIndex' => $request->input("tabIndex", 0)
         ]);
     }
 
-    public function store(Request $request, Travel $travel)
-    {
-         // Validate data
-         $nextReviewUser = $this->validateDataForReview($request);
-
-         // Create travel
-         $travel = $travel->create($request->merge([Travel::APPLICANT_ID => $this->getUserId()])->all());
-
-         // Create participants
-         $participantUsers = $this->getParticipantUsers($request->participants);
-         $travel->participants()->saveMany($participantUsers);
-
-         // Create initial review
-         $this->createReview($travel->id, $this->getUserId(), ReviewType::Request->value, ReviewState::Accepted->value, $request->current_review_comment, 0);
-
-         // Create next review
-         $this->createReview($travel->id, $nextReviewUser->id, ReviewType::Verification->value, ReviewState::Pending->value, null, 0);
-
-         return $this->show($request, $travel);
-    }
-
-    public function show(Request $request, Travel $travel)
-    {
-        $travel = $this->getPersistedTravel($travel)->load(Travel::REVIEWS);
-        $participants = $this->getPersistedParticipants($travel);
-
-        return view('travels.show', [
-            'travel' => $travel,
-            'participants' => $participants
-        ]);
-    }
-
-    public function edit(Request $request, Travel $travel)
-    {
+    // GET /travels/{id}/edit: Open form and show data of travel request with specified id
+    // PUT /travels/{id}/edit: Rerender form with previous inputs but changed participants
+    function edit(Request $request, Travel $travel) {
         $travel = $this->getPersistedTravel($travel);
         [$currentReview, $previousReview, $nextReviewUser] = $this->getRequestReviews($request, $travel);
 
@@ -98,26 +100,50 @@ class TravelController extends Controller
             'users' => $users,
             'current_review_type' => $currentReview->type,
             'previous_review' => $previousReview,
-            'next_review_user' => $nextReviewUser
+            'next_review_user' => $nextReviewUser,
+            'tabIndex' => $request->input("tabIndex", 0)
         ]);
     }
 
+    // POST /travels: Save new travel request and show summary (validation error: GET /travels/create with old inputs is called)
+    function store(Request $request, Travel $travel) {
+        // Validate data
+        $nextReviewUser = $this->validateDataForReview($request);
+
+        // Create travel
+        $travel = $travel->create($request->merge([Travel::APPLICANT_ID => $this->getUserId()])->all());
+
+        // Create participants
+        $participantUsers = $this->getParticipantUsers($request->participants);
+        $travel->participants()->saveMany($participantUsers);
+
+        // Create initial review
+        $this->createReview($travel->id, $this->getUserId(), ReviewType::Request->value, ReviewState::Accepted->value, $request->current_review_comment, 0);
+
+        // Create next review
+        $this->createReview($travel->id, $nextReviewUser->id, ReviewType::Verification->value, ReviewState::Pending->value, null, 0);
+
+        return $this->show($request, $travel);
+    }
+
+    // PUT /travels/{id}: Save updated travel request and show summary (validation error: GET /travels/{id}/edit with old inputs is called)
     public function update(Request $request, Travel $travel) {
         // Validate data
         $nextReviewUser = $this->validateDataForReview($request);
 
         // Load current data
+        $travel = $this->getPersistedTravel($travel, -1);
         $reviews = $travel->load(Travel::REVIEWS)->reviews()->get();
         $currentReview = $reviews->last();
 
-        $changed = true;
+        // Create travel update event
+        $changed = Event::addUpdateEvent(Travel::class, $travel->id, $currentReview->id, $travel, $request->all());
 
-        // Update travel
-        $travel->update($request->merge([Travel::APPLICANT_ID => $this->getUserId()])->all());
-
-        // Update participants
-        $participantUsers = $this->getParticipantUsers($request->participants);
-        $travel->participants()->sync($participantUsers);
+        // Create participants update event
+        $changed |= Event::addListEvent(User::class, $travel->id, $currentReview->id,
+            $this->getParticipantUsers($this->getPersistedParticipants($travel)),
+            $this->getParticipantUsers($this->getRequestParticipants($request))
+        );
 
         // Update current review
         $this->updateReview($currentReview,
@@ -132,8 +158,8 @@ class TravelController extends Controller
         return $this->show($request, $travel);
     }
 
-    public function destroy(Travel $travel)
-    {
+    // DELETE /travels/{id}: Delete travel withs specified id
+    public function destroy(Travel $travel) {
         $travel->delete();
 
         return redirect()->route('travels.index');
@@ -156,6 +182,7 @@ class TravelController extends Controller
         ]);
 
         $nextReviewUser = User::where(User::EMAIL, $request->next_review_user)->first();
+
         if (!isset($nextReviewUser))
             throw ValidationException::withMessages(["next_review_user" => "Invalid user!"]);
 
@@ -217,7 +244,7 @@ class TravelController extends Controller
     }
 
     private function getParticipantUsers($participants) {
-        return User::whereIn(User::EMAIL, $participants)->get();
+        return User::whereIn(USER::EMAIL, $participants)->get();
     }
 
     function getUsers() {
@@ -225,11 +252,12 @@ class TravelController extends Controller
     }
 
     function getPersistedTravel($travel, $reviewId = -1) {
-        return $travel;
+        return Event::getEntityWithState($travel, $reviewId);
     }
 
     function getPersistedParticipants($travel, $reviewId = -1) {
-        return $travel->participants()->get()->map(function($participant) { return $participant->email; });
+        return Event::getListWithState(User::class, $travel->participants, $travel->id, $reviewId)
+            ->map(function($participant) { return $participant->email; });
     }
 
     private function createReview($travelId, $userId, $type, $state, $comment, $changed) {

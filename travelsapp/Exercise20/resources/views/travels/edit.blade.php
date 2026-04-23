@@ -16,6 +16,16 @@ fieldset > div > label { width: 200px; }
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <form method="POST" action="{{ route('travels.edit', ['travel' => $travel->id]) }}">
+                        <section class="tab">
+                            <input type="radio" name="tabIndex" value="0" id="tab0" hidden @checked(old("tabIndex", $tabIndex) == 0) />
+                            <input type="radio" name="tabIndex" value="1" id="tab1" hidden @checked(old("tabIndex", $tabIndex) == 1) />
+                            <input type="radio" name="tabIndex" value="2" id="tab2" hidden @checked(old("tabIndex", $tabIndex) == 2) />
+                            <header>
+                                <nav>
+                                    <label for="tab0">Travel</label><label for="tab1">Participants</label><label for="tab2">Previous Review</label>
+                                </nav>
+                            </header>
+                            <article class="tab0">
                                 <div>
                                     <label for="title">Title</label>
                                     <input type="text" name="title" value="{{ old('title', $travel->title) }}" class="{{ $errors->has('title') ? 'has-error' : '' }}" />
@@ -45,6 +55,13 @@ fieldset > div > label { width: 200px; }
                                     <label for="details">Details</label>
                                     <textarea name="details" class="{{ $errors->has('details') ? 'has-error' : '' }}">{{ old('details', $travel->details) }}</textarea>
                                 </div>
+                                <footer>
+                                    <nav>
+                                        <label for="tab1">Next</label>
+                                    </nav>
+                                </footer>
+                            </article>
+                            <article class="tab1">
                                 <select name="participant_user">
                                     @foreach ($users->filter(fn($el) => $el->email != Auth::user()->email && !collect(old('participants', $participants))->contains($el->email)) as $user)
                                     <option value="{{ $user->email }}">{{ $user->email }}</option>
@@ -77,6 +94,14 @@ fieldset > div > label { width: 200px; }
                                         </tbody>
                                     </table>
                                 </div>
+                                <footer>
+                                    <nav>
+                                        <label for="tab0">Previous</label>
+                                        <label for="tab2">Next</label>
+                                    </nav>
+                                </footer>
+                            </article>
+                            <article class="tab2">
                                 <div>
                                     <label for="previous_review_type">Type</label>
                                     <input type="text" name="previous_review_type" value="{{ old('type', $previous_review->type) }}" readonly />
@@ -89,6 +114,13 @@ fieldset > div > label { width: 200px; }
                                     <label for="previous_review_comment">Optional comment</label>
                                     <textarea type="text" name="previous_review_comment" rows="10">{{ $previous_review->comment }}</textarea>
                                 </div>
+                                <footer>
+                                    <nav>
+                                        <label for="tab1">Previous</label>
+                                    </nav>
+                                </footer>
+                            </article>
+                        </section>
                         <br/>
                         <fieldset>
                             <legend>Next review</legend>
