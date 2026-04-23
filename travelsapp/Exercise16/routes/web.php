@@ -21,5 +21,6 @@ Route::middleware('auth')->group(function () {
 
 Route::resource('/users', UserController::class)->middleware(['auth']);
 Route::resource('/travels', TravelController::class)->middleware(['auth']);
+Route::post('/travels/create', [TravelController::class, 'create'])->middleware(['auth']);
 
 require __DIR__.'/auth.php';
