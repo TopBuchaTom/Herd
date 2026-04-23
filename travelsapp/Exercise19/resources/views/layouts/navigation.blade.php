@@ -15,11 +15,17 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('travels.index', ['review_type' => 'request', 'review_state' => ''])" :active="request()->routeIs('travels.index') && request()->input('review_type')=='request'">
+                        {{ __('Requests') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('travels.index', ['review_type' => 'verification', 'review_state' => 'PENDING'])" :active="request()->routeIs('travels.index') && request()->input('review_type')=='verification'">
+                        {{ __('Verifications') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('travels.index', ['review_type' => 'approval', 'review_state' => 'PENDING'])" :active="request()->routeIs('travels.index') && request()->input('review_type')=='approval'">
+                        {{ __('Approvals') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
                         {{ __('Users') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('travels.index')" :active="request()->routeIs('travels.index')">
-                        {{ __('Travels') }}
                     </x-nav-link>
                 </div>
             </div>
